@@ -39,8 +39,12 @@ class ClusterControl(object):
             response = yield from client.create_cluster(
                 ClusterIdentifier=cluster_identifier,
                 NodeType='dc1.large',
+                ClusterType='single-node',
+                VpcSecurityGroupIds=['sg-a8f55bcc'],
                 MasterUsername=username,
                 MasterUserPassword=password,
+                PubliclyAccessible=True,
+                ClusterParameterGroupName='default.redshift-1.0',
             )
         except botocore_exceptions.ClientError as e:
             if e.response['Error']['Code'] != 'ClusterAlreadyExists':
