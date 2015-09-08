@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS test_session (
 
 
 class ClusterControl(object):
-    cluster_name = 'travis-test'
+    cluster_name = 'redshift-sqlalchemy-test'
     username = 'travis'
     password = os.environ['PGPASSWORD']
 
