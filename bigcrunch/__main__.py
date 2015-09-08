@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS test_session (
 class ClusterControl(object):
     cluster_name = 'travis-test'
     username = 'travis'
-    password = 'barbarbar'
+    password = os.environ['PGPASSWORD']
 
     def __init__(self, client):
         self.client = client
