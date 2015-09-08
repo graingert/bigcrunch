@@ -108,6 +108,7 @@ def create_engine(cluster):
         port=cluster['Port'],
         dbname='dev',
         client_encoding='utf8',
+        enable_hstore=False,
     )
 
 
