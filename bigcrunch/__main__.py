@@ -74,27 +74,39 @@ class ClusterControl(object):
 
 
 class Database(object):
-    def __init__(self, connection):
-        self.connection = connection
+    def __init__(self, conn):
+        self.conn = conn
 
     @asyncio.coroutine
     def add_test_session(self, uuid):
-        with (yield from self.connection.contextual_connect()) as conn:
-            yield from conn.execute(create_table)
+        trans = yield from self.conn.begin()
+        try:
+            yield from self.conn.execute(create_table)
             insert = sa.text("""
                 INSERT INTO test_session (pk)
                 VALUES (:pk)
             """)
-            yield from conn.execute(insert, pk=uuid)
+            yield from self.conn.execute(insert, pk=uuid)
+        except:
+            trans.rollback()
+            raise
+        else:
+            trans.commit()
 
     def remove_test_session(self, uuid):
-        with (yield from self.connection.contextual_connect()) as conn:
-            yield from conn.execute(create_table)
+        trans = yield from self.conn.begin()
+        try:
+            yield from self.conn.execute(create_table)
             delete = sa.text("""
                 DELETE FROM test_session
                 WHERE pk = :pk
             """)
-            yield from conn.execute(delete, pk=uuid)
+            yield from self.conn.execute(delete, pk=uuid)
+        except:
+            trans.rollback()
+            raise
+        else:
+            trans.commit()
 
     def running_test_sessions(self):
         pass
@@ -125,8 +137,9 @@ def create_database(request):
     cluster = yield from ClusterControl(client).get_or_create()
 
     engine = yield from create_engine(cluster)
-    db = Database(connection=engine)
-    yield from db.add_test_session(session_id)
+    with (yield from engine) as conn:
+        db = Database(conn=conn)
+        yield from db.add_test_session(session_id)
 
     return web.Response(
         text=json.dumps({
@@ -144,8 +157,9 @@ def delete_database(request):
     cluster = yield from ClusterControl(client).get()
 
     engine = yield from create_engine(cluster)
-    db = Database(connection=engine)
-    yield from db.remove_test_session(session_id)
+    with (yield from engine) as conn:
+        db = Database(conn=conn)
+        yield from db.remove_test_session(session_id)
 
     return web.Response(
         text='',
