@@ -57,10 +57,17 @@ class ClusterControl(object):
     def get(self):
         client = self.client
         cluster_identifier = self.cluster_name
-        response = yield from client.describe_clusters(
-            ClusterIdentifier=cluster_identifier,
-        )
-        return response['Clusters'][0]['Endpoint']
+        while True:
+            response = yield from client.describe_clusters(
+                ClusterIdentifier=cluster_identifier,
+            )
+            cluster = response['Clusters'][0]
+            if cluster['ClusterStatus'] == 'creating':
+                yield from asyncio.sleep(5)
+            else:
+                if 'Endpoint' not in cluster:
+                    print(response)
+                return cluster['Endpoint']
 
     @asyncio.coroutine
     def destroy(self):
