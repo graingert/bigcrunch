@@ -64,7 +64,6 @@ class ClusterControl(object):
 
     @asyncio.coroutine
     def destroy(self):
-        raise Exception()
         cluster_identifier = self.cluster_name
         client = self.client
         try:
