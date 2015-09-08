@@ -88,10 +88,10 @@ class Database(object):
             """)
             yield from self.conn.execute(insert, pk=uuid)
         except:
-            trans.rollback()
+            yield from trans.rollback()
             raise
         else:
-            trans.commit()
+            yield from trans.commit()
 
     def remove_test_session(self, uuid):
         trans = yield from self.conn.begin()
@@ -103,10 +103,10 @@ class Database(object):
             """)
             yield from self.conn.execute(delete, pk=uuid)
         except:
-            trans.rollback()
+            yield from trans.rollback()
             raise
         else:
-            trans.commit()
+            yield from trans.commit()
 
     def running_test_sessions(self):
         pass
