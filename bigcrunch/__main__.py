@@ -143,7 +143,7 @@ def create_database(request):
 
     return web.Response(
         text=json.dumps({
-            'resource_url': '/session/{session_id}'.format(session_id),
+            'resource_url': '/session/' + session_id,
             'cluster': cluster,
         }),
     )
