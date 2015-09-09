@@ -9,7 +9,7 @@ from aiohttp import web
 from aiopg import sa as aiopg_sa
 from yieldfrom.botocore import exceptions as botocore_exceptions
 from yieldfrom.botocore import session as botocore_session
-
+import psycopg2
 
 create_table = """
 CREATE TABLE IF NOT EXISTS test_session (
@@ -126,8 +126,12 @@ class Database(object):
         FROM test_session
         WHERE (created_time + interval '1 hour') < SYSDATE
         """
-        result = yield from self.conn.execute(query)
-        return (yield from result.fetchone()).sessions
+        try:
+            result = yield from self.conn.execute(query)
+            return (yield from result.fetchone()).sessions
+        # Table doesn't exist
+        except psycopg2.ProgrammingError:
+            return 0
 
 
 def create_engine(cluster):
