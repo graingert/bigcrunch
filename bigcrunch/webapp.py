@@ -54,7 +54,10 @@ class ClusterControl(object):
             cluster = response['Cluster']
             if 'Endpoint' not in cluster:
                 print(response)
-            return cluster['Endpoint']
+            endpoint = cluster['Endpoint']
+            if 'Address' not in endpoint:
+                print(response)
+            return endpoint
 
     @asyncio.coroutine
     def get(self):
