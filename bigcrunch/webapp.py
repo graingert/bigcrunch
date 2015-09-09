@@ -52,12 +52,10 @@ class ClusterControl(object):
             return (yield from self.get())
         else:
             cluster = response['Cluster']
-            if 'Endpoint' not in cluster:
-                print(response)
-            endpoint = cluster['Endpoint']
-            if 'Address' not in endpoint:
-                print(response)
-            return endpoint
+            if cluster['ClusterStatus'] == 'creating':
+                yield from asyncio.sleep(5)
+                return (yield from self.get())
+            return cluster['Endpoint']
 
     @asyncio.coroutine
     def get(self):
@@ -71,8 +69,6 @@ class ClusterControl(object):
             if cluster['ClusterStatus'] == 'creating':
                 yield from asyncio.sleep(5)
             else:
-                if 'Endpoint' not in cluster:
-                    print(response)
                 return cluster['Endpoint']
 
     @asyncio.coroutine
