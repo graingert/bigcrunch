@@ -61,15 +61,28 @@ class ClusterControl(object):
     def get(self):
         client = self.client
         cluster_identifier = self.cluster_name
+        not_found_count = 0
         while True:
-            response = yield from client.describe_clusters(
-                ClusterIdentifier=cluster_identifier,
-            )
-            cluster = response['Clusters'][0]
-            if cluster['ClusterStatus'] == 'creating':
-                yield from asyncio.sleep(5)
+            try:
+                response = yield from client.describe_clusters(
+                    ClusterIdentifier=cluster_identifier,
+                )
+            except botocore_exceptions.ClientError as e:
+                not_found_and_retry = (
+                    e.response['Error']['Code'] == 'ClusterNotFound' and
+                    not_found_count < 0
+                )
+                if not_found_and_retry:
+                    not_found_count += 1
+                    yield from asyncio.sleep(15)
+                else:
+                    raise e
             else:
-                return cluster['Endpoint']
+                cluster = response['Clusters'][0]
+                if cluster['ClusterStatus'] == 'creating':
+                    yield from asyncio.sleep(5)
+                else:
+                    return cluster['Endpoint']
 
     @asyncio.coroutine
     def destroy(self):
