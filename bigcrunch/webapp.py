@@ -53,6 +53,8 @@ class ClusterControl(object):
         else:
             cluster = response['Cluster']
             if cluster['ClusterStatus'] == 'creating':
+                print('cluster is creating')
+                print(response)
                 yield from asyncio.sleep(5)
                 return (yield from self.get())
             return cluster['Endpoint']
@@ -74,12 +76,16 @@ class ClusterControl(object):
                 )
                 if not_found_and_retry:
                     not_found_count += 1
+                    print('cluster not found yet')
+                    print(e.response)
                     yield from asyncio.sleep(15)
                 else:
                     raise e
             else:
                 cluster = response['Clusters'][0]
                 if cluster['ClusterStatus'] == 'creating':
+                    print('Cluster is still creating')
+                    print(response)
                     yield from asyncio.sleep(5)
                 else:
                     return cluster['Endpoint']
