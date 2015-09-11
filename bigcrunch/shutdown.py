@@ -1,5 +1,7 @@
 import asyncio
 
+from yieldfrom.botocore import exceptions as botocore_exceptions
+
 from bigcrunch import webapp
 
 
@@ -7,7 +9,14 @@ from bigcrunch import webapp
 def shutdown():
     client = yield from webapp.redshift_client()
     cluster_control = webapp.ClusterControl(client)
-    cluster = yield from cluster_control.get()
+    try:
+        cluster = yield from cluster_control.get()
+    except botocore_exceptions.ClientError as e:
+        if e.response['Error']['Code'] != 'ClusterNotFound':
+            raise e
+        else:
+            print('Redshift already shutdown')
+            return
 
     engine = yield from webapp.create_engine(cluster)
     with (yield from engine) as conn:
@@ -15,6 +24,7 @@ def shutdown():
         sessions = yield from db.running_test_sessions()
 
     if sessions == 0:
+        print('shutting down Redshift')
         yield from cluster_control.destroy()
 
 
