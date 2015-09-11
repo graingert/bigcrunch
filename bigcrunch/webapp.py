@@ -110,19 +110,23 @@ class Database(object):
 
     @asyncio.coroutine
     def add_test_session(self, uuid):
-        trans = yield from self.conn.begin()
-        try:
-            yield from self.conn.execute(create_table)
-            insert = sa.text("""
-                INSERT INTO test_session (pk)
-                VALUES (:pk)
-            """)
-            yield from self.conn.execute(insert, pk=uuid)
-        except:
-            yield from trans.rollback()
-            raise
-        else:
-            yield from trans.commit()
+        while True:
+            trans = yield from self.conn.begin()
+            try:
+                yield from self.conn.execute(create_table)
+                insert = sa.text("""
+                    INSERT INTO test_session (pk)
+                    VALUES (:pk)
+                """)
+                yield from self.conn.execute(insert, pk=uuid)
+            except psycopg2.IntegrityError:
+                yield from trans.rollback()
+            except:
+                yield from trans.rollback()
+                raise
+            else:
+                yield from trans.commit()
+                break
 
     def remove_test_session(self, uuid):
         trans = yield from self.conn.begin()
