@@ -35,29 +35,35 @@ class ClusterControl(object):
         username = self.username
         password = self.password
 
-        try:
-            response = yield from client.create_cluster(
-                ClusterIdentifier=cluster_identifier,
-                NodeType='dc1.large',
-                ClusterType='single-node',
-                VpcSecurityGroupIds=['sg-a8f55bcc'],
-                MasterUsername=username,
-                MasterUserPassword=password,
-                PubliclyAccessible=True,
-                ClusterParameterGroupName='default.redshift-1.0',
-            )
-        except botocore_exceptions.ClientError as e:
-            if e.response['Error']['Code'] != 'ClusterAlreadyExists':
-                raise e
-            return (yield from self.get())
-        else:
-            cluster = response['Cluster']
-            if cluster['ClusterStatus'] == 'creating':
-                print('cluster is creating')
-                print(response)
-                yield from asyncio.sleep(5)
+        while True:
+            try:
+                response = yield from client.create_cluster(
+                    ClusterIdentifier=cluster_identifier,
+                    NodeType='dc1.large',
+                    ClusterType='single-node',
+                    VpcSecurityGroupIds=['sg-a8f55bcc'],
+                    MasterUsername=username,
+                    MasterUserPassword=password,
+                    PubliclyAccessible=True,
+                    ClusterParameterGroupName='default.redshift-1.0',
+                )
+            except botocore_exceptions.ClientError as e:
+                if e.response['Error']['Code'] != 'ClusterAlreadyExists':
+                    raise e
                 return (yield from self.get())
-            return cluster['Endpoint']
+            else:
+                cluster = response['Cluster']
+                status = cluster['ClusterStatus']
+                if status == 'deleting':
+                    print('cluster is deleting')
+                    yield from asyncio.sleep(15)
+                    continue
+                if status != 'available':
+                    print('cluster is {status}'.format(status=status))
+                    print(response)
+                    yield from asyncio.sleep(5)
+                    return (yield from self.get())
+                return cluster['Endpoint']
 
     @asyncio.coroutine
     def get(self):
