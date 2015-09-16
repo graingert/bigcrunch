@@ -132,7 +132,7 @@ class Database(object):
                 raise
             else:
                 yield from trans.commit()
-                break
+                return
 
     def remove_test_session(self, uuid):
         trans = yield from self.conn.begin()
