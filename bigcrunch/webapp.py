@@ -63,6 +63,11 @@ class ClusterControl(object):
                     print(response)
                     yield from asyncio.sleep(5)
                     return (yield from self.get())
+                if 'Address' not in cluster['Endpoint'}:
+                    print('Something went wrong')
+                    print(response)
+                    yield from asyncio.sleep(5)
+                    return (yield from self.get())
                 return cluster['Endpoint']
 
     @asyncio.coroutine
