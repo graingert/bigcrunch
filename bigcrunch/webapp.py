@@ -101,6 +101,12 @@ class ClusterControl(object):
                     print('Cluster is still creating')
                     print(response)
                     yield from asyncio.sleep(5)
+                    continue
+                if 'Address' not in cluster['Endpoint']:
+                    print('Something went wrong')
+                    print(response)
+                    yield from asyncio.sleep(5)
+                    continue
                 else:
                     return cluster['Endpoint']
 
