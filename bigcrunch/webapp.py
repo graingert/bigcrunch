@@ -158,7 +158,7 @@ class Database(object):
         query = """
         SELECT COUNT(*) AS sessions
         FROM test_session
-        WHERE (created_time + interval '1 hour') < SYSDATE
+        WHERE (created_time + interval '4 hour') < SYSDATE
         """
         try:
             result = yield from self.conn.execute(query)
