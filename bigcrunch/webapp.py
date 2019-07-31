@@ -198,7 +198,7 @@ def redshift_client(loop):
 def create_database(request):
     session_id = str(uuid.uuid1())
 
-    client = yield from redshift_client(request.loop)
+    client = redshift_client(request.loop)
     cluster = yield from ClusterControl(client).get_or_create()
 
     engine = yield from create_engine(cluster)
@@ -218,7 +218,7 @@ def create_database(request):
 def delete_database(request):
     session_id = request.match_info['session_id']
 
-    client = yield from redshift_client()
+    client = redshift_client(request.loop)
     cluster = yield from ClusterControl(client).get()
 
     engine = yield from create_engine(cluster)
