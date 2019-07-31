@@ -5,10 +5,10 @@ import uuid
 from http import client as http_client
 
 import sqlalchemy as sa
+import aiobotocore
 from aiohttp import web
 from aiopg import sa as aiopg_sa
-from yieldfrom.botocore import exceptions as botocore_exceptions
-from yieldfrom.botocore import session as botocore_session
+import botocore.exceptions
 import psycopg2
 
 create_table = """
@@ -50,7 +50,7 @@ class ClusterControl(object):
                         'arn:aws:iam::688441717003:role/SqlAlchemyRedshiftTestRole',
                     ],
                 )
-            except botocore_exceptions.ClientError as e:
+            except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] != 'ClusterAlreadyExists':
                     raise e
                 return (yield from self.get())
@@ -66,7 +66,7 @@ class ClusterControl(object):
                     print(response)
                     yield from asyncio.sleep(5)
                     return (yield from self.get())
-                if 'Address' not in cluster['Endpoint'}:
+                if 'Address' not in cluster['Endpoint']:
                     print('Something went wrong')
                     print(response)
                     yield from asyncio.sleep(5)
@@ -83,7 +83,7 @@ class ClusterControl(object):
                 response = yield from client.describe_clusters(
                     ClusterIdentifier=cluster_identifier,
                 )
-            except botocore_exceptions.ClientError as e:
+            except botocore.exceptions.ClientError as e:
                 not_found_and_retry = (
                     e.response['Error']['Code'] == 'ClusterNotFound' and
                     not_found_count < 0
@@ -101,6 +101,12 @@ class ClusterControl(object):
                     print('Cluster is still creating')
                     print(response)
                     yield from asyncio.sleep(5)
+                    continue
+                if 'Address' not in cluster['Endpoint']:
+                    print('Something went wrong')
+                    print(response)
+                    yield from asyncio.sleep(5)
+                    continue
                 else:
                     return cluster['Endpoint']
 
@@ -113,7 +119,7 @@ class ClusterControl(object):
                 ClusterIdentifier=cluster_identifier,
                 SkipFinalClusterSnapshot=True,
             )
-        except botocore_exceptions.ClientError as e:
+        except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] != 'InvalidClusterState':
                 raise e
 
@@ -183,8 +189,8 @@ def create_engine(cluster):
     )
 
 
-def redshift_client():
-    session = botocore_session.get_session()
+def redshift_client(loop):
+    session = aiobotocore.get_session(loop=loop)
     return session.create_client('redshift')
 
 
@@ -192,7 +198,7 @@ def redshift_client():
 def create_database(request):
     session_id = str(uuid.uuid1())
 
-    client = yield from redshift_client()
+    client = redshift_client(request.loop)
     cluster = yield from ClusterControl(client).get_or_create()
 
     engine = yield from create_engine(cluster)
@@ -212,7 +218,7 @@ def create_database(request):
 def delete_database(request):
     session_id = request.match_info['session_id']
 
-    client = yield from redshift_client()
+    client = redshift_client(request.loop)
     cluster = yield from ClusterControl(client).get()
 
     engine = yield from create_engine(cluster)
