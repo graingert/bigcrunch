@@ -1,17 +1,17 @@
 import asyncio
 
-from yieldfrom.botocore import exceptions as botocore_exceptions
+import botocore.exceptions
 
 from bigcrunch import webapp
 
 
 @asyncio.coroutine
-def shutdown():
-    client = yield from webapp.redshift_client()
+def shutdown(loop):
+    client = yield from webapp.redshift_client(loop)
     cluster_control = webapp.ClusterControl(client)
     try:
         cluster = yield from cluster_control.get()
-    except botocore_exceptions.ClientError as e:
+    except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != 'ClusterNotFound':
             raise e
         else:
@@ -30,5 +30,5 @@ def shutdown():
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(shutdown())
+    loop.run_until_complete(shutdown(loop))
     loop.close()
