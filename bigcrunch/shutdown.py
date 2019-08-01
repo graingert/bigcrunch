@@ -7,7 +7,7 @@ from bigcrunch import webapp
 
 @asyncio.coroutine
 def shutdown():
-    client = yield from webapp.redshift_client()
+    client = webapp.redshift_client()
     cluster_control = webapp.ClusterControl(client)
     try:
         cluster = yield from cluster_control.get()
