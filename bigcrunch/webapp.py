@@ -189,8 +189,8 @@ def create_engine(cluster):
     )
 
 
-def redshift_client(loop):
-    session = aiobotocore.get_session(loop=loop)
+def redshift_client():
+    session = aiobotocore.get_session()
     return session.create_client('redshift')
 
 
@@ -198,7 +198,7 @@ def redshift_client(loop):
 def create_database(request):
     session_id = str(uuid.uuid1())
 
-    client = redshift_client(request.loop)
+    client = redshift_client()
     cluster = yield from ClusterControl(client).get_or_create()
 
     engine = yield from create_engine(cluster)
@@ -218,7 +218,7 @@ def create_database(request):
 def delete_database(request):
     session_id = request.match_info['session_id']
 
-    client = redshift_client(request.loop)
+    client = redshift_client()
     cluster = yield from ClusterControl(client).get()
 
     engine = yield from create_engine(cluster)

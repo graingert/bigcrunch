@@ -6,8 +6,8 @@ from bigcrunch import webapp
 
 
 @asyncio.coroutine
-def shutdown(loop):
-    client = yield from webapp.redshift_client(loop)
+def shutdown():
+    client = yield from webapp.redshift_client()
     cluster_control = webapp.ClusterControl(client)
     try:
         cluster = yield from cluster_control.get()
@@ -30,5 +30,5 @@ def shutdown(loop):
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(shutdown(loop))
+    loop.run_until_complete(shutdown())
     loop.close()
