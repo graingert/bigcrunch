@@ -24,8 +24,8 @@ class ClusterControl(object):
     cluster_name = 'redshift-sqlalchemy-test'
     username = 'travis'
     password = os.environ['PGPASSWORD']
-    vpc_security_group_id = os.environ['VPCSECURITYGROUPID']
-    iam_role = os.environ['IAMROLEARN']
+    vpc_security_group_id = os.environ['VPC_SECURITY_GROUP_ID']
+    iam_role = os.environ['IAM_ROLE_ARN']
 
     def __init__(self, client):
         self.client = client
