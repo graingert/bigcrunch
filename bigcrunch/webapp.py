@@ -24,6 +24,8 @@ class ClusterControl(object):
     cluster_name = 'redshift-sqlalchemy-test'
     username = 'travis'
     password = os.environ['PGPASSWORD']
+    vpc_security_group_id = os.environ['VPC_SECURITY_GROUP_ID']
+    iam_role = os.environ['IAM_ROLE_ARN']
 
     def __init__(self, client):
         self.client = client
@@ -34,6 +36,8 @@ class ClusterControl(object):
         client = self.client
         username = self.username
         password = self.password
+        vpc_security_group_id = self.vpc_security_group_id
+        iam_role = self.iam_role
 
         while True:
             try:
@@ -41,14 +45,12 @@ class ClusterControl(object):
                     ClusterIdentifier=cluster_identifier,
                     NodeType='dc2.large',
                     ClusterType='single-node',
-                    VpcSecurityGroupIds=['sg-a8f55bcc'],
+                    VpcSecurityGroupIds=[vpc_security_group_id],
                     MasterUsername=username,
                     MasterUserPassword=password,
                     PubliclyAccessible=True,
                     ClusterParameterGroupName='default.redshift-1.0',
-                    IamRoles=[
-                        'arn:aws:iam::688441717003:role/SqlAlchemyRedshiftTestRole',
-                    ],
+                    IamRoles=[iam_role],
                 )
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] != 'ClusterAlreadyExists':
